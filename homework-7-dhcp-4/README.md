@@ -200,23 +200,14 @@ S2(config-if-range)#shut
 ### 8. Назначьте сети VLAN соответствующим интерфейсам коммутатора.
 
 a. Назначьте используемые порты соответствующей VLAN (указанной в таблице VLAN выше) и настройте их для режима статического доступа.
-> Для S2 переназначать порты, кажется, не надо. Они и так все в default vlan находятся. Поэтому я переведу f0/18 в режим статического доступа для S2 и все.
-```bash
-S2(config)#int f0/18
-S2(config-if)#switchport mode access
-S2(config-if)#end
-```
 
-> Для S2 выполняю назначение портов в соответствии с таблицей. Как я понимаю на скриншоте ошибка, у VLAN 200 интерфейс VLAN 200. Кажется, тут должен быть f0/5. Я ему статический режим делать не буду, поскольку далее он транком назначается.
+> Для 12 выполняю назначение портов в соответствии с таблицей. C 200 VLAN я не совсем понимаю что нужно назначить. Вероятно, ничего. Может, бага в задании?
 ![img_1.png](images/bug-2.png)
 ```bash
 S1(config)#int f0/6
 S1(config-if)#switchport mode access
 S1(config-if)#switchport access vlan 100
-S1(config-if)#end
-S1(config)#int f0/5
-S1(config-if)#switchport access vlan 200
-S1(config-if)#end
+S1(config-if)#end 
 ```
 
 ### 9. Вручную настройте интерфейс S1 F0/5 в качестве транка 802.1Q.
@@ -317,13 +308,13 @@ Pool R1_Client_LAN :
  Utilization mark (high/low)    : 100 / 0
  Subnet size (first/next)       : 0 / 0 
  Total addresses                : 62
- Leased addresses               : 0
+ Leased addresses               : 1
  Excluded addresses             : 2
  Pending event                  : none
 
  1 subnet is currently in the pool
  Current index        IP address range                    Leased/Excluded/Total
- 192.168.1.1          192.168.1.1      - 192.168.1.62      0    / 2     / 62
+ 192.168.1.1          192.168.1.1      - 192.168.1.62      1    / 2     / 62
 
 Pool R2_Client_LAN :
  Utilization mark (high/low)    : 100 / 0
@@ -343,7 +334,7 @@ b. Выполните команду show ip dhcp bindings для проверк
 R1#show ip dhcp binding
 IP address       Client-ID/              Lease expiration        Type
                  Hardware address
-R1#
+192.168.1.6      0009.7C05.3836           --                     Automatic
 ```
 
 c. Выполните команду show ip dhcp server statistics для проверки сообщений DHCP.
@@ -358,439 +349,78 @@ R1#
 ```
 
 ### 4. Попытка получить IP-адрес от DHCP на PC-A
-> К сожалению, у меня ничего не получилось. PC-A не получил свой IP адрес из пула DHCP. Я в течении часа попытался потраблшутить, но не нашел проблему.
 
-# Настройки R1
+a. Из командной строки компьютера PC-A выполните команду ipconfig /all.
+b. После завершения процесса обновления выполните команду ipconfig для просмотра новой информации об IP-адресе.
 ```bash
-R1#show running-config
-Building configuration...
+C:\>ipconfig /renew
 
-Current configuration : 1611 bytes
-!
-version 15.4
-no service timestamps log datetime msec
-no service timestamps debug datetime msec
-service password-encryption
-!
-hostname R1
-!
-!
-!
-enable secret 5 $1$mERr$9cTjUIEqNGurQiFU.ZeCi1
-!
-!
-ip dhcp excluded-address 192.168.1.1 192.168.1.5
-ip dhcp excluded-address 192.168.1.97 192.168.1.101
-!
-ip dhcp pool R1_Client_LAN
- network 192.168.1.0 255.255.255.192
- default-router 192.168.1.1
- domain-name CCNA-lab.com
-ip dhcp pool R2_Client_LAN
- network 192.168.1.96 255.255.255.240
- default-router 192.168.1.97
- domain-name CCNA-lab.com
-!
-!
-!
-ip cef
-no ipv6 cef
-!
-!
-!
-!
-!
-!
-!
-!
-!
-!
-no ip domain-lookup
-!
-!
-spanning-tree mode pvst
-!
-!
-!
-!
-!
-!
-interface GigabitEthernet0/0/0
- ip address 10.0.0.1 255.255.255.252
- duplex auto
- speed auto
-!
-interface GigabitEthernet0/0/1
- no ip address
- duplex auto
- speed auto
-!
-interface GigabitEthernet0/0/1.100
- description CLIENTS
- encapsulation dot1Q 100
- ip address 192.168.1.1 255.255.255.192
-!
-interface GigabitEthernet0/0/1.200
- description MANAGEMENT
- encapsulation dot1Q 200
- ip address 192.168.1.65 255.255.255.224
-!
-interface GigabitEthernet0/0/1.1000
- description NATIVE VLAN
- encapsulation dot1Q 1000 native
- no ip address
-!
-interface GigabitEthernet0/0/2
- no ip address
- duplex auto
- speed auto
- shutdown
-!
-interface Vlan1
- no ip address
- shutdown
-!
-ip classless
-ip route 0.0.0.0 0.0.0.0 10.0.0.2 
-!
-ip flow-export version 9
-!
-!
-!
-!
-!
-!
-!
-!
-line con 0
- password 7 0822455D0A16
- logging synchronous
- login
-!
-line aux 0
-!
-line vty 0 4
- password 7 0822455D0A16
- logging synchronous
- login
-line vty 5 15
- password 7 0822455D0A16
- logging synchronous
- login
-!
-!
-!
-end
+   IP Address......................: 192.168.1.6
+   Subnet Mask.....................: 255.255.255.192
+   Default Gateway.................: 192.168.1.1
+   DNS Server......................: 0.0.0.0
 ```
 
+c. Проверьте подключение с помощью пинга IP-адреса интерфейса R0 G0/0/1.
+> Тут бага в описании, у нас ведь нет R0. Попингую тогда адрес g0/0/1 на R2
 ```bash
-R1#show ip int brief
-Interface              IP-Address      OK? Method Status                Protocol 
-GigabitEthernet0/0/0   10.0.0.1        YES manual up                    up 
-GigabitEthernet0/0/1   unassigned      YES unset  up                    up 
-GigabitEthernet0/0/1.100192.168.1.1     YES manual up                    up 
-GigabitEthernet0/0/1.200192.168.1.65    YES manual up                    up 
-GigabitEthernet0/0/1.1000unassigned      YES unset  up                    up 
-GigabitEthernet0/0/2   unassigned      YES unset  administratively down down 
-Vlan1                  unassigned      YES unset  administratively down down
+C:\>ping 192.168.1.97
+
+Pinging 192.168.1.97 with 32 bytes of data:
+
+Reply from 192.168.1.97: bytes=32 time<1ms TTL=254
+Reply from 192.168.1.97: bytes=32 time<1ms TTL=254
+Reply from 192.168.1.97: bytes=32 time<1ms TTL=254
+Reply from 192.168.1.97: bytes=32 time<1ms TTL=254
+
+Ping statistics for 192.168.1.97:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 0ms, Maximum = 0ms, Average = 0ms
 ```
 
+## Часть 3. Настройка и проверка DHCP-ретрансляции на R2
+
+### Шаг 1. Настройка R2 в качестве агента DHCP-ретрансляции для локальной сети на G0/0/1
+a. Настройте команду ip helper-address на G0/0/1, указав IP-адрес G0/0/0 R1.
+b. Сохраните конфигурацию
 ```bash
-R1#show ip dhcp pool
-
-Pool R1_Client_LAN :
- Utilization mark (high/low)    : 100 / 0
- Subnet size (first/next)       : 0 / 0 
- Total addresses                : 62
- Leased addresses               : 0
- Excluded addresses             : 2
- Pending event                  : none
-
- 1 subnet is currently in the pool
- Current index        IP address range                    Leased/Excluded/Total
- 192.168.1.1          192.168.1.1      - 192.168.1.62      0    / 2     / 62
-
-Pool R2_Client_LAN :
- Utilization mark (high/low)    : 100 / 0
- Subnet size (first/next)       : 0 / 0 
- Total addresses                : 14
- Leased addresses               : 0
- Excluded addresses             : 2
- Pending event                  : none
-
- 1 subnet is currently in the pool
- Current index        IP address range                    Leased/Excluded/Total
- 192.168.1.97         192.168.1.97     - 192.168.1.110     0    / 2     / 14
-R1#show ip interface brief
-Interface              IP-Address      OK? Method Status                Protocol 
-GigabitEthernet0/0/0   10.0.0.1        YES manual up                    up 
-GigabitEthernet0/0/1   unassigned      YES unset  up                    up 
-GigabitEthernet0/0/1.100192.168.1.1     YES manual up                    up 
-GigabitEthernet0/0/1.200192.168.1.65    YES manual up                    up 
-GigabitEthernet0/0/1.1000unassigned      YES unset  up                    up 
-GigabitEthernet0/0/2   unassigned      YES unset  administratively down down 
-Vlan1                  unassigned      YES unset  administratively down down
+R2(config)#int g0/0/1
+R2(config-if)#ip helper-address 10.0.0.1
 ```
 
-# Настройки S1
+## Шаг 2. Попытка получить IP-адрес от DHCP на PC-B
 
+a. Из командной строки компьютера PC-B выполните команду ipconfig /all.
+> У меня сразу адрес подтянулся, видимо DHCP запрос успел пройти пока я ковырялся.
+
+b. После завершения процесса обновления выполните команду ipconfig для просмотра новой информации об IP-адресе.
 ```bash
-S1#show vlan brief
+C:\>ipconfig /all
 
-VLAN Name                             Status    Ports
----- -------------------------------- --------- -------------------------------
-1    default                          active    
-100  CLIENTS                          active    Fa0/6
-200  MANAGEMENT                       active    
-999  PARKING_LOT                      active    Fa0/1, Fa0/2, Fa0/3, Fa0/4
-                                                Fa0/7, Fa0/8, Fa0/9, Fa0/10
-                                                Fa0/11, Fa0/12, Fa0/13, Fa0/14
-                                                Fa0/15, Fa0/16, Fa0/17, Fa0/18
-                                                Fa0/19, Fa0/20, Fa0/21, Fa0/22
-                                                Fa0/23, Fa0/24, Gig0/1, Gig0/2
-1000 PRIVATE                          active    
-1002 fddi-default                     active    
-1003 token-ring-default               active    
-1004 fddinet-default                  active    
-1005 trnet-default                    active   
+FastEthernet0 Connection:(default port)
+
+   Connection-specific DNS Suffix..: CCNA-lab.com
+   Physical Address................: 00D0.BC17.1DB4
+   Link-local IPv6 Address.........: FE80::2D0:BCFF:FE17:1DB4
+   IPv6 Address....................: ::
+   IPv4 Address....................: 192.168.1.102
 ```
 
+c. Проверьте подключение с помощью пинга IP-адреса интерфейса R1 G0/0/1.
+> А тут попингую G0/0/1.100 на R1
 ```bash
-S1#show running-config
-Building configuration...
+C:\>ping 192.168.1.1
 
-Current configuration : 3076 bytes
-!
-version 15.0
-no service timestamps log datetime msec
-no service timestamps debug datetime msec
-service password-encryption
-!
-hostname S1
-!
-enable secret 5 $1$mERr$9cTjUIEqNGurQiFU.ZeCi1
-!
-!
-!
-no ip domain-lookup
-!
-!
-!
-spanning-tree mode pvst
-spanning-tree extend system-id
-!
-interface FastEthernet0/1
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/2
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/3
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/4
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/5
- switchport access vlan 200
- switchport trunk native vlan 1000
- switchport trunk allowed vlan 100,200,1000
- switchport mode trunk
- switchport nonegotiate
-!
-interface FastEthernet0/6
- switchport access vlan 100
- switchport mode access
-!
-interface FastEthernet0/7
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/8
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/9
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/10
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/11
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/12
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/13
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/14
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/15
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/16
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/17
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/18
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/19
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/20
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/21
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/22
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/23
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface FastEthernet0/24
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface GigabitEthernet0/1
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface GigabitEthernet0/2
- switchport access vlan 999
- switchport mode access
- shutdown
-!
-interface Vlan1
- no ip address
- shutdown
-!
-interface Vlan200
- ip address 192.168.1.66 255.255.255.224
-!
-ip default-gateway 192.168.1.65
-!
-!
-!
-!
-line con 0
- password 7 0822455D0A16
- logging synchronous
- login
-!
-line vty 0 4
- password 7 0822455D0A16
- logging synchronous
- login
-line vty 5 15
- password 7 0822455D0A16
- logging synchronous
- login
-!
-!
-!
-!
-end
-```
+Pinging 192.168.1.1 with 32 bytes of data:
 
-```bash
-S1# show ip int brief
-Interface              IP-Address      OK? Method Status                Protocol 
-FastEthernet0/1        unassigned      YES manual administratively down down 
-FastEthernet0/2        unassigned      YES manual administratively down down 
-FastEthernet0/3        unassigned      YES manual administratively down down 
-FastEthernet0/4        unassigned      YES manual administratively down down 
-FastEthernet0/5        unassigned      YES manual up                    up 
-FastEthernet0/6        unassigned      YES manual up                    up 
-FastEthernet0/7        unassigned      YES manual administratively down down 
-FastEthernet0/8        unassigned      YES manual administratively down down 
-FastEthernet0/9        unassigned      YES manual administratively down down 
-FastEthernet0/10       unassigned      YES manual administratively down down 
-FastEthernet0/11       unassigned      YES manual administratively down down 
-FastEthernet0/12       unassigned      YES manual administratively down down 
-FastEthernet0/13       unassigned      YES manual administratively down down 
-FastEthernet0/14       unassigned      YES manual administratively down down 
-FastEthernet0/15       unassigned      YES manual administratively down down 
-FastEthernet0/16       unassigned      YES manual administratively down down 
-FastEthernet0/17       unassigned      YES manual administratively down down 
-FastEthernet0/18       unassigned      YES manual administratively down down 
-FastEthernet0/19       unassigned      YES manual administratively down down 
-FastEthernet0/20       unassigned      YES manual administratively down down 
-FastEthernet0/21       unassigned      YES manual administratively down down 
-FastEthernet0/22       unassigned      YES manual administratively down down 
-FastEthernet0/23       unassigned      YES manual administratively down down 
-FastEthernet0/24       unassigned      YES manual administratively down down 
-GigabitEthernet0/1     unassigned      YES manual administratively down down 
-GigabitEthernet0/2     unassigned      YES manual administratively down down 
-Vlan1                  unassigned      YES manual administratively down down 
-Vlan200                192.168.1.66    YES manual up                    up
-```
+Reply from 192.168.1.1: bytes=32 time<1ms TTL=254
+Reply from 192.168.1.1: bytes=32 time<1ms TTL=254
+Reply from 192.168.1.1: bytes=32 time<1ms TTL=254
+Reply from 192.168.1.1: bytes=32 time<1ms TTL=254
 
-
-```bash
-S1#  show vlan 1000
-               ^
-% Invalid input detected at '^' marker.
-	
-S1#show interfaces trunk
-Port        Mode         Encapsulation  Status        Native vlan
-Fa0/5       on           802.1q         trunking      1000
-
-Port        Vlans allowed on trunk
-Fa0/5       100,200,1000
-
-Port        Vlans allowed and active in management domain
-Fa0/5       100,200,1000
-
-Port        Vlans in spanning tree forwarding state and not pruned
-Fa0/5       100,200,1000
+Ping statistics for 192.168.1.1:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 0ms, Maximum = 0ms, Average = 0ms
 ```
