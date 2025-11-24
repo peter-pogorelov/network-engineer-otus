@@ -444,6 +444,7 @@ c. Ограничьте ненадежный порт Fa0/18 на S2 пятью 
 ```bash
 S2(config)#ip dhcp snooping
 S2(config)#ip dhcp snooping vlan 10
+S2(config)#no ip dhcp snooping information option
 S2(config)#int f0/18
 S2(config-if)#ip dhcp snoop limit rate 5
 S2(config-if)#int f0/1
@@ -455,52 +456,27 @@ d. Проверка DHCP Snooping на S2.
 ```bash
 S2#show ip dhcp snooping
 Switch DHCP snooping is enabled
-**DHCP snooping is configured on following VLANs:
-10**
-Insertion of option 82 is enabled
+DHCP snooping is configured on following VLANs:
+10
+**Insertion of option 82 is disabled**
 Option 82 on untrusted port is not allowed
 Verification of hwaddr field is enabled
 Interface                  Trusted    Rate limit (pps)
 -----------------------    -------    ----------------
 FastEthernet0/1            yes        unlimited       
+FastEthernet0/17           yes        unlimited       
 FastEthernet0/18           no         5        
 ```
 
 e. В командной строке на PC-B освободите, а затем обновите IP-адрес.
-> Сходу ничего не заработало. Попробовал выполнить no ip dhcp snooping - сразу же стало работать. Начал траблшутить, попробовал перевести порт f0/17, перевести на VLAN 10, и выставить ему режим dhcp snooing trust - все заработало.
-
-![img_4.png](images/img_4.png)
-
-> Сделал аналогично с PC-B - все тоже работает. То есть, вот так работает.
-
 ```bash
-interface FastEthernet0/18
-    switchport access vlan 10
-    ip dhcp snooping trust
-    ip dhcp snooping limit rate 5
-    switchport mode access
-    switchport port-security
-    switchport port-security maximum 2
-    switchport port-security violation protect
-    switchport port-security aging time 60
-!
+C:\>ipconfig /renew
+
+   IP Address......................: 192.168.10.10
+   Subnet Mask.....................: 255.255.255.0
+   Default Gateway.................: 192.168.10.1
+   DNS Server......................: 0.0.0.0
 ```
-
-> А вот так уже нет.
-
-```bash
-interface FastEthernet0/18
-    switchport access vlan 10
-    ip dhcp snooping limit rate 5
-    switchport mode access
-    switchport port-security
-    switchport port-security maximum 2
-    switchport port-security violation protect
-    switchport port-security aging time 60
-!
-```
-
-> Я не знаю, бага это PT или моя ошибка. Но кажется что я все сделал верно с точки зрения задания. Поэтому чтобы в дальнейшем себя не блокировать, я сделал порт f0/18 доверенным.
 
 ## 6. Реализация PortFast и BPDU Guard
 a. Настройте PortFast на всех портах доступа, которые используются на обоих коммутаторах.
@@ -612,6 +588,6 @@ Reply from 192.168.10.202: bytes=32 time<1ms TTL=255
 ## 1. С точки зрения безопасности порта на S2, почему нет значения таймера для оставшегося возраста в минутах, когда было сконфигурировано динамическое обучение - sticky?
 > Стики адреса не имеют таймера устаревания.
 ## 2. Что касается безопасности порта на S2, если вы загружаете скрипт текущей конфигурации на S2, почему порту 18 на PC-B никогда не получит IP-адрес через DHCP?
-> Я если честно не очень понял, что такое текущая конфигурация. Если речь про то что мы делали в ДЗ - то получается, что я не сошел с ума и PC-B действительно не должен получать IP адрес от DHCP? Я поресерчил, и кажется это связано с тем что если DHCP серверу пришел запрос с trusted порта (f0/1), то ответ тоже должен приходить на trusted порт. А порт f0/18 является untrusted. Или у меня информация не достоверная..
+> Вопрос не совсем понятен, что под собой подразумевает загрузку скрипта текущей конфигурации? Если мы берем за референс предыдущий вопрос, и допустим что у нас выполнена команда switchport port-security mac-address sticky, то при переподключении устройства с другим MAC адресом мы натолкнемся на то что с конфигурацией switchport port-security violation protect, DHCP запросы будут дропаться. Соответственно, устройство не получит айпи адрес. 
 ## 3. Что касается безопасности порта, в чем разница между типом абсолютного устаревания и типом устаревание по неактивности?
 > Абсолютное устаревание удаляет адрес по истечении заданного времени, а устаревание по неактивности - только если устройство неактивно.
