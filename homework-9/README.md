@@ -105,14 +105,17 @@ R1(config-if)#ip ospf priority 50
 ```
 
 b. Настройте таймеры OSPF на G0/0/1 каждого маршрутизатора для таймера приветствия, составляющего 30 секунд.
+> Дополнительно добавлю dead-interval
 ```bash
 R1(config-if)#int g0/0/1
 R1(config-if)#ip ospf hello-interval 30
+R1(config-if)#ip ospf dead-interval 120
 ```
 
 ```bash
 R2(config-if)#int g0/0/1
 R2(config-if)#ip ospf hello-interval 30
+R2(config-if)#ip ospf dead-interval 120
 ```
 
 с. На R1 настройте статический маршрут по умолчанию, который использует интерфейс Loopback 1 в качестве интерфейса выхода. Затем распространите маршрут по умолчанию в OSPF. Обратите внимание на сообщение консоли после установки маршрута по умолчанию.
@@ -177,8 +180,8 @@ GigabitEthernet0/0/1 is up, line protocol is up
   Transmit Delay is 1 sec, State DR, Priority 50                        << -- Приоритет = 50
   Designated Router (ID) 1.1.1.1, Interface address 10.53.0.1
   Backup Designated Router (ID) 2.2.2.2, Interface address 10.53.0.2
-  Timer intervals configured, Hello 30, Dead 40, Wait 40, Retransmit 5. << -- Hello = 30, про DEAD не было речи в задании :)
-    Hello due in 00:00:14
+  Timer intervals configured, Hello 30, Dead 120, Wait 120, Retransmit 5 << -- Hello = 30, Dead = 120
+    Hello due in 00:00:17
   Index 1/1, flood queue length 0
   Next 0x0(0)/0x0(0)
   Last flood scan length is 1, maximum is 1
